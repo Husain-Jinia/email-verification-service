@@ -1,0 +1,36 @@
+{
+  "name": "email-verify",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/app.js",
+    "dev": "nodemon --watch \"src/**/*.ts\" --exec \"npx ts-node\" ./src/app.ts",
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "build:clean": "npm run clean && npm run build",
+    "lint": "eslint . --ext .ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "description": "",
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "firebase": "^11.9.1",
+    "nodemailer": "^7.0.3",
+    "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
+    "eslint": "^9.28.0",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
