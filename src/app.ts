@@ -26,6 +26,15 @@ app.use('/api/verification', rateLimiter);
 // Routes
 app.use('/api/verification', verificationRoutes);
 
+// Root route
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'Email Verification API',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   res.json({ 
