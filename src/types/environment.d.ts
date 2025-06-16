@@ -8,5 +8,11 @@ declare namespace NodeJS {
     FIREBASE_APP_ID: string;
     PORT: string;
     VERIFICATION_CODE_EXPIRY: string;
+    SMTP_HOST: string;
+    SMTP_PORT: string;
+    SMTP_SECURE: string;
+    SMTP_USER: string;
+    SMTP_PASS: string;
+    SMTP_FROM: string;
   }
 }

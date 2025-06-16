@@ -1,5 +1,5 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -32,13 +32,26 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let db: Firestore;
 
-try {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  console.log('Firebase initialized successfully');
-} catch (error) {
-  console.error('Error initializing Firebase:', error);
-  throw error;
+// Initialize Firebase
+app = initializeApp(firebaseConfig);
+db = getFirestore(app);
+
+console.log('Firebase initialized with config:', {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain
+});
+
+// Test connection function
+export async function testFirebaseConnection(): Promise<void> {
+  try {
+    const testDoc = doc(db, '_test_connection', 'test');
+    await setDoc(testDoc, { timestamp: Date.now() });
+    await deleteDoc(testDoc);
+    console.log('Firebase connection test successful');
+  } catch (error) {
+    console.error('Error testing Firebase connection:', error);
+    throw error;
+  }
 }
 
 export { db };

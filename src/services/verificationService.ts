@@ -1,5 +1,16 @@
 import { db } from '../config/firebase';
-import { collection, doc, setDoc, getDoc, deleteDoc, query, where, getDocs, FirestoreError } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  getDocs, 
+  FirestoreError 
+} from 'firebase/firestore';
+import { EmailService } from './emailService';
 
 const VERIFICATION_COLLECTION = 'verificationCodes';
 
@@ -11,6 +22,12 @@ interface VerificationCode {
   createdAt: number;
 }
 
+interface VerificationStatus {
+  isVerified: boolean;
+  hasPendingCode: boolean;
+  expiresAt: number | null;
+}
+
 export class ApiError extends Error {
   constructor(public message: string, public statusCode: number = 500) {
     super(message);
@@ -19,6 +36,12 @@ export class ApiError extends Error {
 }
 
 export class VerificationService {
+  private emailService: EmailService;
+
+  constructor() {
+    this.emailService = new EmailService();
+  }
+
   private generateCode(): string {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }
@@ -44,11 +67,21 @@ export class VerificationService {
       });
       console.log('Created new verification code');
 
+      // Send verification email
+      await this.emailService.sendVerificationCode(email, code);
+      console.log('Sent verification email');
+
       return code;
     } catch (error) {
       console.error('Error in createVerificationCode:', error);
+      if (error instanceof ApiError) {
+        throw error;
+      }
       if (error instanceof FirestoreError) {
-        throw new ApiError(`Database error: ${error.message}`, 500);
+        throw new ApiError(`Database error: ${error.code}`, 500);
+      }
+      if (error instanceof Error) {
+        throw new ApiError(error.message, 500);
       }
       throw new ApiError('Failed to generate verification code', 500);
     }
@@ -85,9 +118,50 @@ export class VerificationService {
     } catch (error) {
       console.error('Error in verifyCode:', error);
       if (error instanceof FirestoreError) {
-        throw new ApiError(`Database error: ${error.message}`, 500);
+        throw new ApiError(`Database error: ${error.code}`, 500);
+      }
+      if (error instanceof Error) {
+        throw new ApiError(error.message, 500);
       }
       throw new ApiError('Failed to verify code', 500);
+    }
+  }
+
+  async checkVerificationStatus(email: string): Promise<VerificationStatus> {
+    try {
+      console.log(`Checking verification status for email: ${email}`);
+      const q = query(
+        collection(db, VERIFICATION_COLLECTION),
+        where('email', '==', email)
+      );
+
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        return {
+          isVerified: false,
+          hasPendingCode: false,
+          expiresAt: null
+        };
+      }
+
+      const latestCode = querySnapshot.docs
+        .map(doc => doc.data() as VerificationCode)
+        .sort((a, b) => b.createdAt - a.createdAt)[0];
+
+      return {
+        isVerified: latestCode.isVerified,
+        hasPendingCode: latestCode.expiresAt > Date.now(),
+        expiresAt: latestCode.expiresAt
+      };
+    } catch (error) {
+      console.error('Error in checkVerificationStatus:', error);
+      if (error instanceof FirestoreError) {
+        throw new ApiError(`Database error: ${error.code}`, 500);
+      }
+      if (error instanceof Error) {
+        throw new ApiError(error.message, 500);
+      }
+      throw new ApiError('Failed to check verification status', 500);
     }
   }
 
@@ -104,7 +178,10 @@ export class VerificationService {
     } catch (error) {
       console.error('Error in deleteExistingCodes:', error);
       if (error instanceof FirestoreError) {
-        throw new ApiError(`Database error: ${error.message}`, 500);
+        throw new ApiError(`Database error: ${error.code}`, 500);
+      }
+      if (error instanceof Error) {
+        throw new ApiError(error.message, 500);
       }
       throw new ApiError('Failed to delete existing codes', 500);
     }
