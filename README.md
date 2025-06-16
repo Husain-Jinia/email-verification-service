@@ -37,7 +37,7 @@ npm install
 cp .env.example .env
 ```
 
-## Configuration
+## Configurations
 
 ### Firebase Setup
 
